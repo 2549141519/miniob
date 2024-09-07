@@ -119,7 +119,7 @@ GROUP                                   RETURN_TOKEN(GROUP);
 BY                                      RETURN_TOKEN(BY);
 STORAGE                                 RETURN_TOKEN(STORAGE);
 FORMAT                                  RETURN_TOKEN(FORMAT);
-\'[0-9]{4}"-"[0-9]{2}"-"[0-9]{2}\'  {
+\'[0-9]{4}"-"[0-9]{1,2}"-"[0-9]{1,2}\'  {
     yylval->string = strdup(yytext + 1);  // 去掉开头的引号
     yylval->string[strlen(yylval->string) - 1] = '\0';  // 去掉结尾的引号
     RETURN_TOKEN(DATE_STR);
