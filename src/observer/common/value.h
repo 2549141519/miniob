@@ -34,6 +34,8 @@ public:
   friend class FloatType;
   friend class BooleanType;
   friend class CharType;
+  friend class DateType;
+  friend class FilterStmt;
 
   Value() = default;
 
@@ -83,7 +85,7 @@ public:
   {
     return DataType::type_instance(value.attr_type())->cast_to(value, to_type, result);
   }
-
+  void set_date(int val);
   void set_type(AttrType type) { this->attr_type_ = type; }
   void set_data(char *data, int length);
   void set_data(const char *data, int length) { this->set_data(const_cast<char *>(data), length); }
@@ -108,6 +110,7 @@ public:
   float  get_float() const;
   string get_string() const;
   bool   get_boolean() const;
+  int    get_date() const;
 
 private:
   void set_int(int val);

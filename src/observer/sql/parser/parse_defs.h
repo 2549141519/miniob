@@ -278,6 +278,7 @@ enum SqlCommandFlag
   SCF_EXIT,
   SCF_EXPLAIN,
   SCF_SET_VARIABLE,  ///< 设置变量
+  SCF_DATE,          ///< 添加新的日期处理命令
 };
 /**
  * @brief 表示一个SQL语句
