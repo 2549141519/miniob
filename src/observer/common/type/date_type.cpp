@@ -27,7 +27,10 @@ int DateType::compare(const Value &left, const Value &right) const
   } else if (right.attr_type() == AttrType::FLOATS) {
     return common::compare_float((void *)&left.value_.int_value_, (void *)&right.value_.int_value_);
   }
-  return INT32_MAX;
+  else
+  {
+    return left.get_date() - right.get_date();
+  }
 }
 
 RC DateType::add(const Value &left, const Value &right, Value &result) const
