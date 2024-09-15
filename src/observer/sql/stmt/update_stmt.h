@@ -58,7 +58,7 @@ private:
   Table *table_        = nullptr;
   Value *values_       = nullptr;
   int    value_amount_ = 0;
-
   FieldMeta field_;
+  
   std::unique_ptr<FilterStmt> filter_stmt_;
 };
