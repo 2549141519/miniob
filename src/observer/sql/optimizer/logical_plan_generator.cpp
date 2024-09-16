@@ -78,9 +78,10 @@ RC LogicalPlanGenerator::create(Stmt *stmt, unique_ptr<LogicalOperator> &logical
     } break;
 
     case StmtType::UPDATE: {
-      UpdateStmt *update_stmt = static_cast<UpdateStmt *>(stmt); //强转出对应的stmt
-
-      rc = create_plan(update_stmt, logical_operator);
+    UpdateStmt *update_stmt = static_cast<UpdateStmt *>(stmt); //强转出对应的stmt
+    auto type2 = update_stmt->values()[0].attr_type();
+    LOG_INFO("update type is %d", type2);
+    rc = create_plan(update_stmt, logical_operator);
     } break;
     default: {
       rc = RC::UNIMPLEMENTED;

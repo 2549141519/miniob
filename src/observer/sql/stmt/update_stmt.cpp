@@ -71,9 +71,10 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
     return rc;
   }
 
-  UpdateSqlNode update_node = const_cast<UpdateSqlNode&>(update);
-    // everything alright
-  stmt = new UpdateStmt(table,&(update_node.value), 1,update_field,filter_stmt);
+  stmt = new UpdateStmt(table,&(const_cast<UpdateSqlNode&>(update).value), 1,update_field,filter_stmt);
+  UpdateStmt *update_stmt = static_cast<UpdateStmt *>(stmt); //强转出对应的stmt
+  auto type2 = update_stmt->values()[0].attr_type();
+  LOG_INFO("update type is %d", type2);
   return RC::SUCCESS;
 }
 

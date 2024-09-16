@@ -921,26 +921,35 @@ RC ChunkFileScanner::next_chunk(Chunk &chunk)
   return RC::RECORD_EOF;
 }
 
-RC RecordFileHandler::update_record(Record *rec) {
-  ASSERT(readonly_ == false, "cannot update record into page while the page is readonly");
+RC RecordFileHandler::update_record(Record *rec)
+{
+  RC ret = RC::SUCCESS;
 
+  RecordPageHandler record_page_handler(storage_format_);
+
+  ret = record_page_handler.init(*disk_buffer_pool_, *log_handler_,rec->rid().page_num, ReadWriteMode::READ_WRITE);
+  if (ret != RC::SUCCESS) {
+    LOG_WARN("failed to init record page handler. page num=%d, rc=%s", rec->rid().page_num, strrc(ret));
+    return ret;
+  }
+  return record_page_handler.update_record(rec->rid(),rec->data());
+}
+
+RC RecordPageHandler::update_record(const RID &rid, const char *data)
+{
   //1.合法性检查
-  if(rec->rid().slot_num >= page_header_->record_capacity)
+  if(rid.slot_num >= page_header_->record_capacity)
   {
-    LOG_ERROR(
-        "Invalid slot_num %d, exceed page's record capacity, page_num %d.", rec->rid().slot_num, frame_->page_num());
     return RC::INVALID_ARGUMENT;
   }
   Bitmap bitmap(bitmap_, page_header_->record_capacity);
-  if(!bitmap.get_bit(rec->rid().slot_num)){
-    LOG_ERROR("Invalid slot_num %d, slot is empty, page_num %d.", rec->rid().slot_num, frame_->page_num());
-    return RC::RECORD_RECORD_NOT_EXIST;
+  if(!bitmap.get_bit(rid.slot_num)){
+    return RC::RECORD_NOT_EXIST;
   }
   //2.更新record
-  char *record_data = get_record_data(rec->rid().slot_num);//当前指针指向frame中
-  memcpy(record_data, rec->data(), page_header_->record_real_size);
-  bitmap.set_bit(rec->rid().slot_num);
+  char *record_data = get_record_data(rid.slot_num);//当前指针指向frame中
+  memcpy(record_data, data, page_header_->record_real_size);
+  bitmap.set_bit(rid.slot_num);
   frame_->mark_dirty();
   return RC::SUCCESS;
-
 }

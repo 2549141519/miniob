@@ -200,7 +200,7 @@ public:
    * @brief
    *
    */
-  virtual RC update_record(const RID &rid, const char *data) { return RC::UNIMPLEMENTED; }
+  virtual RC update_record(const RID &rid, const char *data);
 
   /**
    * @brief 获取指定位置的记录数据

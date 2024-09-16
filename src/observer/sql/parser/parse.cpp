@@ -34,5 +34,8 @@ int sql_parse(const char *st, ParsedSqlResult *sql_result);
 RC parse(const char *st, ParsedSqlResult *sql_result)
 {
   sql_parse(st, sql_result);
+  UpdateSqlNode tem = sql_result->sql_nodes()[0]->update;
+  auto type_ = tem.value.attr_type();
+  LOG_INFO("type is %d", type_);
   return RC::SUCCESS;
 }
