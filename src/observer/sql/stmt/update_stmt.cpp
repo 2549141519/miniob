@@ -18,7 +18,7 @@ See the Mulan PSL v2 for more details. */
 
 #include<unordered_map>
 
-UpdateStmt::UpdateStmt(Table *table, Value *values, int value_amount,FieldMeta field,
+UpdateStmt::UpdateStmt(Table *table, const Value *values, int value_amount,FieldMeta field,
   FilterStmt* filter_stmt)
     : table_(table), values_(values), value_amount_(value_amount),field_(field),filter_stmt_(filter_stmt)
 {}
@@ -45,9 +45,14 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
       const FieldMeta *field_meta = table_meta.field(i);
       std::string cur_field_name = field_meta->name();
       auto cur_field_type = field_meta->type();
-      auto cur_field_len = field_meta->len();
-      if(cur_field_name == update.attribute_name && cur_field_type == update.value.attr_type()
-        && cur_field_len == update.value.length()) {
+      
+      if(cur_field_name == update.attribute_name && cur_field_type == update.value.attr_type()) {
+        if(cur_field_type == AttrType::CHARS)
+        {
+          auto cur_field_len = field_meta->len();
+          if(update.value.length() > cur_field_len)
+            continue;
+        }  
           has_match_field = true;
           update_field = *field_meta;
           break;
@@ -72,9 +77,6 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
   }
 
   stmt = new UpdateStmt(table,&(const_cast<UpdateSqlNode&>(update).value), 1,update_field,filter_stmt);
-  UpdateStmt *update_stmt = static_cast<UpdateStmt *>(stmt); //强转出对应的stmt
-  auto type2 = update_stmt->values()[0].attr_type();
-  LOG_INFO("update type is %d", type2);
   return RC::SUCCESS;
 }
 

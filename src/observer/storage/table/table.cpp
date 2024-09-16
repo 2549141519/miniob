@@ -586,16 +586,20 @@ RC Table::update_record(Record &record ,const char* attr_name,Value * value)
       return RC::SCHEMA_FIELD_NOT_EXIST;
   }
   //判断 新值与旧值是否相等
-  if( 0 == memcmp(record.data()+field_offset,value->data(),field_length))
+  if(value->length() == field_length && 0 == memcmp(record.data()+field_offset,value->data(),field_length))
   {
     LOG_WARN("update old value equals new value");
     return RC::RECORD_DUPLICATE_KEY;
   }
   //写入新的值
   char *old_data = record.data();//old_data不能释放，其指向的是frame中的内存
-  char *data = new char[table_meta_.record_size()];  // new_record->data
+  char *data = (char *)malloc(table_meta_.record_size());
   memcpy(data, old_data, table_meta_.record_size());
-  memcpy(data + field_offset, value->data(), field_length);
+  // 清零指定的区域（可以清零整个 data 或者部分 data）
+  memset(data + field_offset, 0, field_length);
+
+  // 将长度为 value->length() 的内容复制到指定位置
+  memcpy(data + field_offset, value->data(), value->length());
   record.set_data(data);//谁来管理old_data呢？
   if(is_index)
   {
