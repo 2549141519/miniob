@@ -16,8 +16,30 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
 
-using namespace std;
 
+#include <regex>
+#include <string>
+using namespace std;
+static void replace_str(std::string &str, const std::string &from, const std::string &to)
+{
+  if (from.empty()) {
+    return;
+  }
+  size_t pos = 0;
+  while (std::string::npos != (pos = str.find(from, pos))) {
+    str.replace(pos, from.length(), to);
+    pos += to.length();  // in case 'to' contains 'from'
+  }
+}
+static bool like_op(const Value &left, const Value &right)
+{
+  std::string raw_reg(right.data());
+  replace_str(raw_reg, "_", "[^']");
+  replace_str(raw_reg, "%", "[^']*");
+  std::regex reg(raw_reg.c_str(), std::regex_constants::ECMAScript | std::regex_constants::icase);
+  bool res = std::regex_match(left.data(), reg);
+  return res;
+}
 RC FieldExpr::get_value(const Tuple &tuple, Value &value) const
 {
   return tuple.find_cell(TupleCellSpec(table_name(), field_name()), value);
@@ -142,6 +164,12 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
     case GREAT_THAN: {
       result = (cmp_result > 0);
     } break;
+    case LIKE_OP :{
+      result = like_op(left,right);
+    } break;
+    case NOT_LIKE_OP:{
+      result = !like_op(left,right);
+    }break;
     default: {
       LOG_WARN("unsupported comparison. %d", comp_);
       rc = RC::INTERNAL;
@@ -584,3 +612,4 @@ RC AggregateExpr::type_from_string(const char *type_str, AggregateExpr::Type &ty
   }
   return rc;
 }
+
