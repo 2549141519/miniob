@@ -97,6 +97,8 @@ RecordPageHandler::~RecordPageHandler() { cleanup(); }
 
 RC RecordPageHandler::init(DiskBufferPool &buffer_pool, LogHandler &log_handler, PageNum page_num, ReadWriteMode mode)
 {
+  //首先 如果disk_buffer_pool_ 已经被初始化，则先清理掉
+  //如果初始化并且已经被读入到缓存中，则直接返回record已经open
   if (disk_buffer_pool_ != nullptr) {
     if (frame_->page_num() == page_num) {
       LOG_WARN("Disk buffer pool has been opened for page_num %d.", page_num);
