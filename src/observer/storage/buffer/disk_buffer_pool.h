@@ -343,6 +343,8 @@ public:
    */
   RC get_buffer_pool(int32_t id, DiskBufferPool *&bp);
 
+  RC remove_file(const char *file_name);
+
 private:
   BPFrameManager frame_manager_{"BufPool"};
 

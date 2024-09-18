@@ -81,6 +81,8 @@ public:
   /// @brief 列出所有的表
   void all_tables(vector<string> &table_names) const;
 
+  RC drop_table(const char *table_name);
+
   /**
    * @brief 将所有内存中的数据，刷新到磁盘中。
    * @details 注意，这里也没有并发控制，需要由上层来保证当前没有正在进行的事务。

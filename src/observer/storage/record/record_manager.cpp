@@ -109,6 +109,7 @@ RC RecordPageHandler::init(DiskBufferPool &buffer_pool, LogHandler &log_handler,
   }
 
   RC ret = RC::SUCCESS;
+  //这里从缓存中申请调入这个页面 赋值给frame中 frame指针指向buffer pool页面
   if ((ret = buffer_pool.get_this_page(page_num, &frame_)) != RC::SUCCESS) {
     LOG_ERROR("Failed to get page handle from disk buffer pool. ret=%d:%s", ret, strrc(ret));
     return ret;
@@ -116,6 +117,7 @@ RC RecordPageHandler::init(DiskBufferPool &buffer_pool, LogHandler &log_handler,
 
   char *data = frame_->data();
 
+  //这里要根据读还是写 给buffer pool中的页面加入读写锁
   if (mode == ReadWriteMode::READ_ONLY) {
     frame_->read_latch();
   } else {
@@ -124,7 +126,9 @@ RC RecordPageHandler::init(DiskBufferPool &buffer_pool, LogHandler &log_handler,
   disk_buffer_pool_ = &buffer_pool;
 
   rw_mode_     = mode;
+  //buffer_pool中的页面 第一块记录的也是pageheader 里边有每条record的具体信息
   page_header_ = (PageHeader *)(data);
+  //pager header紧随其后的是一个位图 记录record的分配情况
   bitmap_      = data + PAGE_HEADER_SIZE;
 
   (void)log_handler_.init(log_handler, buffer_pool.id(), page_header_->record_real_size, storage_format_);
@@ -176,6 +180,7 @@ RC RecordPageHandler::init_empty_page(
   if (table_meta != nullptr && storage_format_ == StorageFormat::PAX_FORMAT) {
     column_num = table_meta->field_num();
   }
+  //行存储的时候 colum_num为0 不记录列数
   page_header_->record_num       = 0;
   page_header_->column_num       = column_num;
   page_header_->record_real_size = record_size;
