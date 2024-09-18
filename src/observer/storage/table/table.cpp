@@ -660,15 +660,5 @@ RC Table::drop(const char *dir)
       }
     }
   }
-  if (RC::SUCCESS == rc) {
-    // 2.destroy record handler
-    record_handler_->close();
-    delete record_handler_;
-    record_handler_ = nullptr;
-    // 3.destroy buffer pool and remove data file
-    std::string        data_file = table_data_file(dir, name());
-    BufferPoolManager &bpm       = db_->buffer_pool_manager();
-    rc                           = bpm.remove_file(data_file.c_str());
-  }
   return rc;
 }
