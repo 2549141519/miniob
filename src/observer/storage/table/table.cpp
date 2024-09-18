@@ -660,5 +660,11 @@ RC Table::drop(const char *dir)
       }
     }
   }
+  if (RC::SUCCESS == rc) {
+    std::string        data_file = table_data_file(dir, name());
+    BufferPoolManager &bpm       = db_->buffer_pool_manager();
+    rc                           = bpm.remove_file(data_file.c_str());
+  }
+
   return rc;
 }
