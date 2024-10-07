@@ -569,9 +569,20 @@ expression:
     | '*' {
       $$ = new StarExpr();
     }
-    | aggr_type LBRACE expression RBRACE {
-      $$ = new UnboundAggregateExpr($1, $3);
+    | aggr_type LBRACE expression_list RBRACE {
+      if ($3->size() > 1 || $3->size() == 0) {
+        $$ = new UnboundAggregateExpr($1, nullptr);
+      } else {
+        $$ = new UnboundAggregateExpr($1, $3->at(0).get());
+      }
     }
+    | aggr_type LBRACE RBRACE {
+    // 处理没有参数的聚合函数，如 count()
+    $$ = new UnboundAggregateExpr($1, nullptr);  // 传递 nullptr 表示无参数
+    }
+    
+    
+
     // your code here
     ;
 
