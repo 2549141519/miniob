@@ -144,6 +144,7 @@ RC ExpressionBinder::bind_unbound_field_expression(
   const char *table_name = unbound_field_expr->table_name();
   const char *field_name = unbound_field_expr->field_name();
 
+  //table_name是别名 如果不存在 就直接拿table就行
   Table *table = nullptr;
   if (is_blank(table_name)) {
     if (context_.query_tables().size() != 1) {

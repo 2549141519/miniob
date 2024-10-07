@@ -116,7 +116,8 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
       table_oper = unique_ptr<LogicalOperator>(join_oper);
     }
   }
-
+  //join -> 两个具体的get操作
+  
   unique_ptr<LogicalOperator> predicate_oper;
 
   RC rc = create_plan(select_stmt->filter_stmt(), predicate_oper);
@@ -127,6 +128,7 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
 
   if (predicate_oper) {
     if (*last_oper) {
+      //这里 可以看出 prediceate -> join 
       predicate_oper->add_child(std::move(*last_oper));
     }
 
@@ -142,6 +144,7 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
 
   if (group_by_oper) {
     if (*last_oper) {
+      //group by -> predicate
       group_by_oper->add_child(std::move(*last_oper));
     }
 
@@ -157,6 +160,7 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
   return RC::SUCCESS;
 }
 
+//把filter_stmt中的条件转为expression 存在vector里
 RC LogicalPlanGenerator::create_plan(FilterStmt *filter_stmt, unique_ptr<LogicalOperator> &logical_operator)
 {
   RC                                  rc = RC::SUCCESS;
@@ -261,6 +265,7 @@ RC LogicalPlanGenerator::create_plan(DeleteStmt *delete_stmt, unique_ptr<Logical
   unique_ptr<LogicalOperator> delete_oper(new DeleteLogicalOperator(table));
 
   if (predicate_oper) {
+    //delete -> where限定词 ->scan_table
     predicate_oper->add_child(std::move(table_get_oper));
     delete_oper->add_child(std::move(predicate_oper));
   } else {
@@ -385,6 +390,7 @@ RC LogicalPlanGenerator::create_plan(UpdateStmt *update_stmt,
   std::unique_ptr<LogicalOperator> update_oper(new UpdateLogicalOperator(table,values,*(update_stmt->update_fields())));
   
   if (predicate_oper) {
+    //同delete
     predicate_oper->add_child(std::move(table_get_oper));
     update_oper->add_child(std::move(predicate_oper));
   } else {

@@ -114,6 +114,11 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         NE
         NOT
         LIKE
+        MAX
+        MIN
+        SUM
+        AVG
+        COUNT
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
 %union {
@@ -144,6 +149,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 
 /** type 定义了各种解析后的结果输出的是什么类型。类型对应了 union 中的定义的成员变量名称 **/
 %type <number>              type
+%type <string>              aggr_type
 %type <condition>           condition
 %type <value>               value
 %type <number>              number
@@ -183,6 +189,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %type <sql_node>            command_wrapper
 // commands should be a list but I use a single command instead
 %type <sql_node>            commands
+
 
 %left '+' '-'
 %left '*' '/'
@@ -366,6 +373,14 @@ type:
     | FLOAT_T  { $$ = static_cast<int>(AttrType::FLOATS); }
     | DATE_T   { $$ = static_cast<int>(AttrType::DATES); }
     ;
+aggr_type:
+    MAX        { $$ = strdup("max"); }
+    | MIN      { $$ = strdup("min"); }
+    | SUM      { $$ = strdup("sum"); }
+    | AVG      { $$ = strdup("avg"); }
+    | COUNT    { $$ = strdup("count"); }
+
+
 insert_stmt:        /*insert   语句的语法解析树*/
     INSERT INTO ID VALUES LBRACE value value_list RBRACE 
     {
@@ -554,6 +569,9 @@ expression:
     | '*' {
       $$ = new StarExpr();
     }
+    | aggr_type LBRACE expression RBRACE {
+      $$ = new UnboundAggregateExpr($1, $3);
+    }
     // your code here
     ;
 
@@ -736,3 +754,5 @@ int sql_parse(const char *s, ParsedSqlResult *sql_result) {
   yylex_destroy(scanner);
   return result;
 }
+
+

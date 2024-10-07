@@ -64,14 +64,24 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
   // collect query fields in `select` statement
   vector<unique_ptr<Expression>> bound_expressions;
   ExpressionBinder expression_binder(binder_context);
-  
+  bool has_fieldexpr = false;
+  bool has_aggrexpr = false; 
   for (unique_ptr<Expression> &expression : select_sql.expressions) {
+    if(expression->type() == ExprType::UNBOUND_FIELD || 
+      expression->type() == ExprType::FIELD)
+        has_fieldexpr = true;
+    else if(expression->type() == ExprType::UNBOUND_AGGREGATION)
+        has_aggrexpr = true;
     RC rc = expression_binder.bind_expression(expression, bound_expressions);
     if (OB_FAIL(rc)) {
       LOG_INFO("bind expression failed. rc=%s", strrc(rc));
       return rc;
     }
   }
+  if(has_fieldexpr && has_aggrexpr) {
+    return RC::INVALID_ARGUMENT;
+  }
+  
 
   vector<unique_ptr<Expression>> group_by_expressions;
   for (unique_ptr<Expression> &expression : select_sql.group_by) {

@@ -291,8 +291,8 @@ class ParsedSqlNode
 public:
   enum SqlCommandFlag flag;
   ErrorSqlNode        error;
-  CalcSqlNode         calc;
-  SelectSqlNode       selection;
+  CalcSqlNode         calc; //
+  SelectSqlNode       selection; //
   InsertSqlNode       insertion;
   DeleteSqlNode       deletion;
   UpdateSqlNode       update;
@@ -324,3 +324,5 @@ public:
 private:
   std::vector<std::unique_ptr<ParsedSqlNode>> sql_nodes_;  ///< 这里记录SQL命令。虽然看起来支持多个，但是当前仅处理一个
 };
+
+

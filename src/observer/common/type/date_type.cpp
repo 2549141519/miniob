@@ -80,3 +80,12 @@ RC DateType::to_string(const Value &val, string &result) const
   result = date_to_string(val.value_.int_value_);
   return RC::SUCCESS;
 }
+
+RC DateType::cast_to(const Value &val, AttrType type, Value &result) const {
+  if(AttrType::FLOATS == type) {
+    float value = val.get_int();
+    result = Value(value);
+    return RC::SUCCESS;
+  }
+  return RC::INVALID_ARGUMENT;
+}

@@ -73,3 +73,12 @@ RC IntegerType::to_string(const Value &val, string &result) const
   result = ss.str();
   return RC::SUCCESS;
 }
+
+RC IntegerType::cast_to(const Value &val, AttrType type, Value &result) const {
+  if(AttrType::FLOATS == type) {
+    float value = val.get_int();
+    result = Value(value);
+    return RC::SUCCESS;
+  }
+  return RC::INVALID_ARGUMENT;
+}
