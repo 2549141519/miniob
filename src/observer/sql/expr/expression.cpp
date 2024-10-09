@@ -277,9 +277,12 @@ RC ComparisonExpr::compare_column(const Column &left, const Column &right, std::
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-ConjunctionExpr::ConjunctionExpr(Type type, vector<unique_ptr<Expression>> &children)
+ConjunctionExpr::ConjunctionExpr(Type type, vector<unique_ptr<Expression>> children)
     : conjunction_type_(type), children_(std::move(children))
-{}
+{
+  auto size = children_.size();
+  size++;
+}
 
 RC ConjunctionExpr::get_value(const Tuple &tuple, Value &value) const
 {

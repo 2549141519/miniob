@@ -42,29 +42,31 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
   for(int i = 0; i < select_sql.joinrelations[0].join_relations.size(); i++) {
     select_sql.relations.push_back(select_sql.joinrelations[0].join_relations[i]);
   }
-  std::vector<std::unique_ptr<Expression>> compexprs;
   for(int i = 0; i < select_sql.joinrelations[0].conditions.size(); i++) {
-    auto conditionalnode = select_sql.joinrelations[0].conditions[i][0];
-    std::unique_ptr<Expression> left(nullptr);
-    std::unique_ptr<Expression> right(nullptr);
-    if(conditionalnode.left_is_attr == 1) {
-      left = std::make_unique<UnboundFieldExpr>(conditionalnode.left_attr.relation_name,conditionalnode.left_attr.attribute_name);
-    }
-    else {
-      left = std::make_unique<ValueExpr>(conditionalnode.left_value);
-    }
+    std::vector<std::unique_ptr<Expression>> comp_exprs;
+    for(int j = 0 ;j < select_sql.joinrelations[0].conditions[i].size() ;j++){
+      auto conditionalnode = select_sql.joinrelations[0].conditions[i][j];
+      std::unique_ptr<Expression> left(nullptr);
+      std::unique_ptr<Expression> right(nullptr);
+      if(conditionalnode.left_is_attr == 1) {
+        left = std::make_unique<UnboundFieldExpr>(conditionalnode.left_attr.relation_name,conditionalnode.left_attr.attribute_name);
+      }
+      else {
+        left = std::make_unique<ValueExpr>(conditionalnode.left_value);
+      }
 
-    if(conditionalnode.right_is_attr == 1) {
-      right = std::make_unique<UnboundFieldExpr>(conditionalnode.right_attr.relation_name,conditionalnode.right_attr.attribute_name);
+      if(conditionalnode.right_is_attr == 1) {
+        right = std::make_unique<UnboundFieldExpr>(conditionalnode.right_attr.relation_name,conditionalnode.right_attr.attribute_name);
+      }
+      else {
+        right = std::make_unique<ValueExpr>(conditionalnode.right_value);
+      }
+      comp_exprs.push_back(std::make_unique<ComparisonExpr>(conditionalnode.comp,std::move(left),std::move(right)));
     }
-    else {
-      right = std::make_unique<ValueExpr>(conditionalnode.right_value);
-    }
-    select_sql.joinexpressions.push_back(std::make_unique<ComparisonExpr>(conditionalnode.comp,std::move(left),std::move(right)));
+      auto size = comp_exprs.size();
+      size++;
+      select_sql.joinexpressions.push_back(std::make_unique<ConjunctionExpr>(ConjunctionExpr::Type::AND,std::move(comp_exprs)));
   }
-  
-
-
 
   BinderContext binder_context;
 
