@@ -68,7 +68,42 @@ RC SqlTaskHandler::handle_sql(SQLStageEvent *sql_event)
     LOG_TRACE("failed to do parse. rc=%s", strrc(rc));
     return rc;
   }
+/*
+  ParsedSqlNode *sql_node = sql_event->sql_node().get();
+  SelectSqlNode *select_node = &sql_node->selection;
+  (void)select_node;
+  auto size = select_node->relations.size();
+  (void)size;
+  for(int i = 0; i < select_node->expressions.size();i++) {
+    auto type = select_node->expressions[i]->type();
+    (void)type;
+    auto expression = select_node->expressions[i].get();
+    auto ubound_field_expr = dynamic_cast<UnboundFieldExpr*>(expression);
+    const string name = ubound_field_expr->table_name();
+    int a = 4;
+    (void)a;
+  }
+  size = select_node->joinrelations.size();
+  (void)size;
+  for(int i = 0; i < select_node->joinrelations.size() ;i++)
+  {
+    auto base_ = select_node->joinrelations[i].base_relation;
+    (void)base_;
+    for(int j = 0; j < select_node->joinrelations[i].join_relations.size();j++)
+    {
+      auto name = select_node->joinrelations[i].join_relations[j];
+      (void)name;
+      int a =2 ;
+      (void)a;
+    }
+  }
+  size = select_node->joinrelations[0].conditions.size();
+  (void)size;
+  
+*/
+  
 
+  
   rc = resolve_stage_.handle_request(sql_event);
   if (OB_FAIL(rc)) {
     LOG_TRACE("failed to do resolve. rc=%s", strrc(rc));
