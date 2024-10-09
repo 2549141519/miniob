@@ -48,9 +48,24 @@ public:
   std::vector<std::unique_ptr<Expression>> &query_expressions() { return query_expressions_; }
   std::vector<std::unique_ptr<Expression>> &group_by() { return group_by_; }
 
+  std::unique_ptr<Expression> GetComp() {
+    if (compexprs.empty()) {
+      return nullptr;  // 如果没有元素，返回空指针
+    }
+
+    // 转移第一个元素的所有权
+    std::unique_ptr<Expression> result = std::move(compexprs.front());
+
+    // 可选：移除第一个元素
+    compexprs.erase(compexprs.begin());
+
+    return result;  // 返回转移后的 unique_ptr
+  }
+
 private:
   std::vector<std::unique_ptr<Expression>> query_expressions_;
   std::vector<Table *>                     tables_;
   FilterStmt                              *filter_stmt_ = nullptr;
   std::vector<std::unique_ptr<Expression>> group_by_;
+  std::vector<std::unique_ptr<Expression>> compexprs;
 };

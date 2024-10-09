@@ -126,6 +126,8 @@ MIN                                     RETURN_TOKEN(MIN);
 SUM                                     RETURN_TOKEN(SUM);
 AVG                                     RETURN_TOKEN(AVG);
 COUNT                                   RETURN_TOKEN(COUNT);
+INNER                                   RETURN_TOKEN(INNER);
+JOIN                                    RETURN_TOKEN(JOIN);
 \'[0-9]{4}"-"[0-9]{1,2}"-"[0-9]{1,2}\'  {
     yylval->string = strdup(yytext + 1);  // 去掉开头的引号
     yylval->string[strlen(yylval->string) - 1] = '\0';  // 去掉结尾的引号

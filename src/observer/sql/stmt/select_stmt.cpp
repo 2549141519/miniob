@@ -37,6 +37,34 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
     LOG_WARN("invalid argument. db is null");
     return RC::INVALID_ARGUMENT;
   }
+  //这个地方仅仅对inner join处理
+  select_sql.relations.push_back(select_sql.joinrelations[0].base_relation);
+  for(int i = 0; i < select_sql.joinrelations[0].join_relations.size(); i++) {
+    select_sql.relations.push_back(select_sql.joinrelations[0].join_relations[i]);
+  }
+  std::vector<std::unique_ptr<Expression>> compexprs;
+  for(int i = 0; i < select_sql.joinrelations[0].conditions.size(); i++) {
+    auto conditionalnode = select_sql.joinrelations[0].conditions[i][0];
+    std::unique_ptr<Expression> left(nullptr);
+    std::unique_ptr<Expression> right(nullptr);
+    if(conditionalnode.left_is_attr == 1) {
+      left = std::make_unique<UnboundFieldExpr>(conditionalnode.left_attr.relation_name,conditionalnode.left_attr.attribute_name);
+    }
+    else {
+      left = std::make_unique<ValueExpr>(conditionalnode.left_value);
+    }
+
+    if(conditionalnode.right_is_attr == 1) {
+      right = std::make_unique<UnboundFieldExpr>(conditionalnode.right_attr.relation_name,conditionalnode.right_attr.attribute_name);
+    }
+    else {
+      right = std::make_unique<ValueExpr>(conditionalnode.right_value);
+    }
+    select_sql.joinexpressions.push_back(std::make_unique<ComparisonExpr>(conditionalnode.comp,std::move(left),std::move(right)));
+  }
+  
+
+
 
   BinderContext binder_context;
 
@@ -63,6 +91,7 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
 
   // collect query fields in `select` statement
   vector<unique_ptr<Expression>> bound_expressions;
+  vector<unique_ptr<Expression>> join_bound_expressions;
   ExpressionBinder expression_binder(binder_context);
   bool has_fieldexpr = false;
   bool has_aggrexpr = false; 
@@ -81,7 +110,14 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
   if(has_fieldexpr && has_aggrexpr) {
     return RC::INVALID_ARGUMENT;
   }
-  
+
+  for (unique_ptr<Expression> &expression : select_sql.joinexpressions) {
+    RC rc = expression_binder.bind_expression(expression, join_bound_expressions);
+    if (OB_FAIL(rc)) {
+      LOG_INFO("bind join expression failed. rc=%s", strrc(rc));
+      return rc;
+    }
+  }
 
   vector<unique_ptr<Expression>> group_by_expressions;
   for (unique_ptr<Expression> &expression : select_sql.group_by) {
@@ -113,6 +149,7 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
   // everything alright
   SelectStmt *select_stmt = new SelectStmt();
 
+  select_stmt->compexprs.swap(join_bound_expressions);
   select_stmt->tables_.swap(tables);
   select_stmt->query_expressions_.swap(bound_expressions);
   select_stmt->filter_stmt_ = filter_stmt;

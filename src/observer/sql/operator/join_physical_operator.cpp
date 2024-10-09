@@ -14,7 +14,8 @@ See the Mulan PSL v2 for more details. */
 
 #include "sql/operator/join_physical_operator.h"
 
-NestedLoopJoinPhysicalOperator::NestedLoopJoinPhysicalOperator() {}
+NestedLoopJoinPhysicalOperator::NestedLoopJoinPhysicalOperator(std::unique_ptr<Expression> innerjoin_expression)
+  :is_join_(false),innerjoin_expression_(std::move(innerjoin_expression)) {}
 
 RC NestedLoopJoinPhysicalOperator::open(Trx *trx)
 {
@@ -34,34 +35,35 @@ RC NestedLoopJoinPhysicalOperator::open(Trx *trx)
   return rc;
 }
 
-RC NestedLoopJoinPhysicalOperator::next()
-{
-  bool left_need_step = (left_tuple_ == nullptr);
-  RC   rc             = RC::SUCCESS;
-  if (round_done_) {
-    left_need_step = true;
-  } else {
-    rc = right_next();
-    if (rc != RC::SUCCESS) {
-      if (rc == RC::RECORD_EOF) {
-        left_need_step = true;
-      } else {
-        return rc;
+RC NestedLoopJoinPhysicalOperator::next() {
+  RC rc = RC::SUCCESS;
+
+  while (true) {
+    // 如果需要获取左表的下一条记录
+    if (left_tuple_ == nullptr || round_done_) {
+      rc = left_next();  // 获取左表记录
+      if (rc != RC::SUCCESS) {
+        return rc;  // 返回错误或左表结束
       }
-    } else {
-      return rc;  // got one tuple from right
     }
-  }
 
-  if (left_need_step) {
-    rc = left_next();
+    // 遍历右表
+    rc = right_next();
+    if (rc == RC::RECORD_EOF) {
+      continue;  // 继续获取下一条左表记录
+    }
     if (rc != RC::SUCCESS) {
-      return rc;
+      return rc;  // 返回其他错误
+    }
+
+    // 检查连接条件
+    innerjoin_expression_->get_value(joined_tuple_,is_join_);
+    if (is_join_.get_boolean()) {
+      round_done_ = false;  // 匹配成功，继续右表遍历
+      is_join_.set_boolean(false);
+      return RC::SUCCESS;  // 返回匹配的记录
     }
   }
-
-  rc = right_next();
-  return rc;
 }
 
 RC NestedLoopJoinPhysicalOperator::close()
