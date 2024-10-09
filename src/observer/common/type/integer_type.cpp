@@ -21,7 +21,8 @@ int IntegerType::compare(const Value &left, const Value &right) const
   if (right.attr_type() == AttrType::INTS) {
     return common::compare_int((void *)&left.value_.int_value_, (void *)&right.value_.int_value_);
   } else if (right.attr_type() == AttrType::FLOATS) {
-    return common::compare_float((void *)&left.value_.int_value_, (void *)&right.value_.int_value_);
+    float tem = left.value_.int_value_;
+    return common::compare_float((void *)&tem, (void *)&right.value_.float_value_);
   }
   return INT32_MAX;
 }
